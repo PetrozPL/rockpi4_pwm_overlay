@@ -1,0 +1,60 @@
+#!/bin/bash
+############################################################################
+# Copyright (c) 2021 Piotr Wroblewski.
+# 
+# This program is free software: you can redistribute it and/or modify  
+# it under the terms of the GNU General Public License as published by  
+# the Free Software Foundation, version 2.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License 
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# pwmsts - return percentage of PWM FAN speed
+#
+############################################################################
+
+_verbose=0
+
+_pidx=0
+_cidx=1
+
+if [ ! -z $1 ]; then
+  _vrbs=$1
+  if [ "$_vrbs" == "-v" ]; then
+    _verbose=1
+  fi
+fi
+
+
+if [ -d /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx} ]; then
+  pwm_per=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/period)
+  pwm_ena=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/enable)
+  pwm_pol=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/polarity)
+  pwm_dtc=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/duty_cycle)
+  _speed=$(expr \( $pwm_dtc \* 100 \) / $pwm_per )
+  if [ "$pwm_ena" == "1" ]; then
+    if [ "$_verbose" == "1" ]; then
+      echo "FAN_STATE = ENABLED"
+      echo "FAN_SPEED = $_speed"
+    else
+      echo "$_speed"
+    fi
+  else
+    if [ "$_verbose" == "1" ]; then
+      echo "FAN_STATE = DISABLED"
+    else
+      echo "-1"
+    fi
+  fi
+else
+    if [ "$_verbose" == "1"]; then
+      echo "FAN PWM NOT CONFIGURED!"
+    else
+      echo "-1"
+    fi
+fi
