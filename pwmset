@@ -1,0 +1,105 @@
+#!/bin/bash
+############################################################################
+# Copyright (c) 2021 Piotr Wroblewski.
+# 
+# This program is free software: you can redistribute it and/or modify  
+# it under the terms of the GNU General Public License as published by  
+# the Free Software Foundation, version 2.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License 
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# pwmset - set percentage of PWM FAN speed (from CFG_PWM_TRSH to 100%)
+#
+############################################################################
+
+_pidx=0
+_cidx=1
+
+CFG_PWM_PER_HZ=25
+CFG_PWM_POL="normal"
+CFG_PWM_TRSH=25
+CFG_PWM_LOW=$(expr \( $CFG_PWM_TRSH - 1 \))
+
+CFG_PWM_PER=$(expr \( 1000000000 / $CFG_PWM_PER_HZ \))
+
+if [ -z $1 ]; then
+	_speed=100
+else
+	if [ "$1" -le "100" ]; then
+		if [ ! "$1" -le "$CFG_PWM_LOW" ]; then
+			_speed=$1
+		else
+			_speed=0
+		fi
+	else
+		_speed=100
+	fi
+fi
+
+_verbose=0
+
+if [ ! -z $2 ]; then
+	_vrbs=$2
+	if [ "$_vrbs" == "-v" ]; then
+		_verbose=1
+	fi
+fi
+
+
+if [ -d /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx} ]; then
+	echo 0 > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/duty_cycle
+	echo $CFG_PWM_PER > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/period
+	echo "inversed" > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/polarity
+	echo $CFG_PWM_POL > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/polarity
+
+	pwm_per=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/period)
+	pwm_ena=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/enable)
+	pwm_pol=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/polarity)
+	pwm_dtc=$(cat /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/duty_cycle)
+
+	if [ "$_verbose" == "1" ]; then
+		echo "PWM PERIOD     = $pwm_per"
+		echo "PWM POLARITY   = $pwm_pol"
+		echo "PWM ENABLE     = $pwm_ena"
+	fi
+
+	new_dtc=$(expr \( $_speed \* $pwm_per \) / 100 )
+
+	if [ "$_verbose" == "1" ]; then
+		echo "PWM_DUTY_CYCLE = $new_dtc"
+	fi
+
+	echo $new_dtc > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/duty_cycle
+
+	if [ $_speed == 0 ]; then
+		echo 0 > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/enable
+		if [ "$_verbose" == "1" ]; then
+                        echo "FAN STATE = DISABLED"
+		else
+			echo "0"
+		fi
+	else
+		echo 1 > /sys/class/pwm/pwmchip${_cidx}/pwm${_pidx}/enable
+
+                if [ "$_verbose" == "1" ]; then
+                        echo "FAN STATE = ENABLED"
+			echo "FAN SPEED = $_speed"
+                else
+                        echo "$_speed"
+                fi
+
+	fi
+
+else
+	if [ "$_verbose" == "1" ]; then
+		echo "PWM NOT CONFIGURED!"
+	else
+		echo "-1"
+	fi
+fi
