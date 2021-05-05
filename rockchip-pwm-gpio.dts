@@ -1,0 +1,28 @@
+/dts-v1/;
+
+/ {
+        compatible = "rockchip,rk3399";
+		
+        fragment@0 {
+                target-path = "/aliases";
+                __overlay__ {
+                        pwm0 = "/pwm@ff420000";
+                        pwm1 = "/pwm@ff420010";
+                };
+        };
+
+        fragment@1 {
+                target-path = "/pwm@ff420000";
+                __overlay__ {
+                        status = "okay";
+                };
+        };
+
+        fragment@2 {
+                target-path = "/pwm@ff420010";
+                __overlay__ {
+                        status = "okay";
+                };
+        };
+		
+};
