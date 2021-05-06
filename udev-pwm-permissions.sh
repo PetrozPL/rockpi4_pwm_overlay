@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Result: chown petroz:digital /sys/class/gpio
+# Result: chown <USERNAME>:digital /sys/class/gpio
 
 chown -R :digital /sys/class/pwm/pwmchip1/
 chown -R :digital /sys/class/pwm/pwmchip2/
