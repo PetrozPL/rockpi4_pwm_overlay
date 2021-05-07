@@ -18,7 +18,9 @@
 #
 ############################################################################
 
+#pwm index - shoudld be 0
 _pidx=0
+#chip index - should be selected based on used PWM pin
 _cidx=1
 
 CFG_PWM_PER_HZ=25
