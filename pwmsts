@@ -20,7 +20,9 @@
 
 _verbose=0
 
+#pwm index - shoudld be 0
 _pidx=0
+#chip index - should be selected based on used PWM pin
 _cidx=1
 
 if [ ! -z $1 ]; then
